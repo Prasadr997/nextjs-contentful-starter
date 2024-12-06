@@ -31,13 +31,13 @@ jobs:
         run: |
           npm run build  # This will create the .next build folder
 
-      - name: Copy the Next.js build to EC2
-        run: |
-          echo "$SSH_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./ ubuntu@$EC2_BACKEND_IP:/var/www/nextjs
-
-      - name: SSH into EC2, Install dependencies, and run the app
-        run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_BACKEND_IP "cd /var/www/nextjs && npm install --production"
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_BACKEND_IP "cd /var/www/nextjs && npm run start &"
+      - name: Copy Next.js files to EC2
+  run: |
+    echo "$SSH_KEY" > private_key.pem
+    chmod 600 private_key.pem
+    ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_BACKEND_IP "mkdir -p /var/www/nextjs"
+    scp -o StrictHostKeyChecking=no -i private_key.pem -r ./ ubuntu@$EC2_BACKEND_IP:/var/www/nextjs
+  env:
+    AWS_REGION: us-east-1
+    EC2_BACKEND_IP: ${{ secrets.EC2_BACKEND_IP }}
+    SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
