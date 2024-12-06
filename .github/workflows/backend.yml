@@ -1,4 +1,4 @@
-name: Deploy Next.js to EC2
+name: Deploy Next.js App to EC2
 
 on:
   push:
@@ -15,40 +15,29 @@ jobs:
       SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     steps:
-      # Checkout code from GitHub repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Set up Node.js environment with version >=18.17.0
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18.17.0'  # Set the Node.js version to >= 18.17.0
+          node-version: '18.x'  # Ensure you're using Node.js >= 18.17.0 for Next.js
 
-      # Install dependencies for Next.js
       - name: Install Dependencies
         run: |
-          npm install  # This installs the dependencies listed in package.json
+          npm install
 
-      # Build the Next.js app
-      - name: Build Next.js app
+      - name: Build Next.js Application
         run: |
-          npm run build  # This will create the `.next` build folder
+          npm run build  # This will create the .next build folder
 
-      # Set up SSH key for deployment
-      - name: Set up SSH key
+      - name: Copy the Next.js build to EC2
         run: |
           echo "$SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
+          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./ * ubuntu@$EC2_BACKEND_IP:/var/www/nextjs
 
-      # Deploy the Next.js app to EC2
-      - name: Deploy Next.js app to EC2
+      - name: SSH into EC2, Install dependencies, and run the app
         run: |
-          # Copy the Next.js build and necessary files to the EC2 instance
-          scp -i private_key.pem -r ./ * ubuntu@$EC2_BACKEND_IP:/var/www/nextjs
-
-          # SSH into EC2, install dependencies, and run the app
-          ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "cd /var/www/nextjs && npm install --production"
-          
-          # Start the Next.js app (with a process manager like PM2 or in a background process)
-          ssh -i private_key.pem ubuntu@$EC2_BACKEND_IP "cd /var/www/nextjs && npm run start &"
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_BACKEND_IP "cd /var/www/nextjs && npm install --production"
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_BACKEND_IP "cd /var/www/nextjs && npm run start &"
