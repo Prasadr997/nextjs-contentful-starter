@@ -35,7 +35,7 @@ jobs:
         run: |
           echo "$SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
-          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./ * ubuntu@$EC2_BACKEND_IP:/var/www/nextjs
+          scp -o StrictHostKeyChecking=no -i private_key.pem -r ./ ubuntu@$EC2_BACKEND_IP:/var/www/nextjs
 
       - name: SSH into EC2, Install dependencies, and run the app
         run: |
